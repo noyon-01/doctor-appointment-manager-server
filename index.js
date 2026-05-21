@@ -2,6 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 const app = express();
 dotenv.config();
 const port = process.env.PORT;
@@ -19,6 +20,25 @@ const client = new MongoClient(uri, {
   },
 });
 
+const JWKS = createRemoteJWKSet(new URL("http://localhost:3000/api/auth/jwks"));
+
+const verifyToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  try {
+    const { payload } = await jwtVerify(token, JWKS);
+    next();
+  } catch (error) {
+    return res.status(403).json({ message: "Forbiddern" });
+  }
+};
+
 async function run() {
   try {
     await client.connect();
@@ -35,7 +55,8 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/doctors/:id", async (req, res) => {
+    //doctor details
+    app.get("/doctors/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = {
         _id: new ObjectId(id),
@@ -44,19 +65,22 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/booking", async (req, res) => {
+    //create booking
+    app.post("/booking", verifyToken, async (req, res) => {
       const BookingData = req.body;
       const result = await bookingCollection.insertOne(BookingData);
       res.send(result);
     });
 
-    app.get("/booking/:userId", async (req, res) => {
+    //get booking
+    app.get("/booking/:userId", verifyToken, async (req, res) => {
       const { userId } = req.params;
       const result = await bookingCollection.find({ userId }).toArray();
       res.send(result);
     });
 
-    app.patch("/booking/:id", async (req, res) => {
+    //update booking
+    app.patch("/booking/:id",  async (req, res) => {
       const id = req.params.id;
       const filter = {
         _id: new ObjectId(id),
@@ -75,7 +99,8 @@ async function run() {
       res.send(result);
     });
 
-    app.delete("/booking/:id", async (req, res) => {
+    //delete booking
+    app.delete("/booking/:id",  async (req, res) => {
       const id = req.params.id;
       const query = {
         _id: new ObjectId(id),
