@@ -55,7 +55,7 @@ async function run() {
       res.send(result);
     });
 
-    //doctor details
+    //Doctor Details
     app.get("/doctors/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = {
@@ -65,14 +65,14 @@ async function run() {
       res.send(result);
     });
 
-    //create booking
+    //Create Booking
     app.post("/booking", verifyToken, async (req, res) => {
       const BookingData = req.body;
       const result = await bookingCollection.insertOne(BookingData);
       res.send(result);
     });
 
-    //get booking
+    //Get Booking
     app.get("/booking/:userId", verifyToken, async (req, res) => {
       const { userId } = req.params;
       const result = await bookingCollection.find({ userId }).toArray();
