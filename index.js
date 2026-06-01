@@ -41,7 +41,7 @@ const verifyToken = async (req, res, next) => {
 
 async function run() {
   try {
-    // await client.connect();
+    await client.connect();
     const db = client.db("doctor-appointment");
     const appointmentCollection = db.collection("appointment-collecton");
     const bookingCollection = db.collection("booking-collection");
@@ -100,7 +100,7 @@ async function run() {
     });
 
     //Delete Booking
-    app.delete("/booking/:id", async (req, res) => {
+    app.delete("/booking/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = {
         _id: new ObjectId(id),
@@ -109,7 +109,7 @@ async function run() {
       res.send(result);
     });
 
-    // await client.db("admin").command({ ping: 1 });
+    await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
